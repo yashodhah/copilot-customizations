@@ -40,7 +40,7 @@ After confirmation, analyze:
 1. **INSERT statements without column lists**
    - Pattern: `INSERT INTO {table} VALUES`
    - Risk: These will break if column count changes
-   
+
 2. **SELECT * queries**
    - Pattern: `SELECT \* FROM {table}`
    - Risk: May return unexpected data

@@ -71,6 +71,33 @@ copilot_client/
 - **Use module scoping** as the first step in every analysis
 - **Document new modules** in `.copilot-context.md` as they’re added
 
+## Maintaining the Manifest
+
+**Keep `.copilot-context.md` up to date!**
+
+The manifest is used by `@sql-impact` to:
+- Map tables to modules (determines search scope)
+- Identify critical tables (affects severity scoring)
+- Understand naming conventions
+
+When you add new tables or modules:
+1. Edit `.copilot-context.md`
+2. Add table to appropriate module section
+3. Mark critical tables if applicable
+
+## Sub-Agent Pattern for Large Impacts
+
+When impact analysis finds 100+ files, the agent uses a sub-agent:
+
+1. **Main agent** shows first 10 results immediately
+2. **Sub-agent** searches exhaustively in background
+3. **Sub-agent** saves complete CSV to `copilot_impact_analysis/`
+4. **Main agent** continues with severity assessment
+
+This keeps the chat responsive while ensuring ALL matches are captured.
+
+---
+
 ### Customize change request template
 
 Edit `prompts/saveChangeRequest.prompt.md`:

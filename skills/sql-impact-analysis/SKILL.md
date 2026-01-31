@@ -152,55 +152,90 @@ Load and apply [severity-criteria.md](./references/severity-criteria.md):
 
 > **This is the canonical output format.** All entry points (agent, prompts) must produce this format.
 
-Output in BOTH formats - **always include CSV in chat**:
+---
 
-#### Markdown Summary
+## Risk Classification
+
+> **Not all dependencies are risks.** Classification depends on change type.
+
+### Risk Levels
+
+| Level | Icon | Meaning | Action Required |
+|-------|------|---------|----------------|
+| **Risk** | 🔴 | Will break, fail, or cause data issues | Must fix before change |
+| **Review** | 🟡 | May be affected, needs human judgment | Review and decide |
+| **Safe** | 🟢 | Found reference, no impact for this change | Informational only |
+
+### Risk by Change Type
+
+Load the appropriate reference file - each contains detailed risk classification:
+
+| Change Type | 🔴 Risk (Will Break) | 🟡 Review | 🟢 Safe |
+|-------------|---------------------|-----------|--------|
+| **Add Column** | `INSERT VALUES` (no cols) | `SELECT *`, Views | Explicit `INSERT (cols)` |
+| **Drop Column** | All explicit refs | `SELECT *` | Comments only |
+| **Rename Column** | All old name refs | `SELECT *` | Aliases, comments |
+| **Modify Column** | Type mismatches | Size-sensitive ops | Same-type widens |
+
+---
+
+## Output Format (Canonical)
+
+### Markdown Summary Template
+
 ```markdown
 ## Impact Analysis: {OBJECT_NAME}
 
 ### Summary
 | Metric | Value |
 |--------|-------|
-| **Object** | {name} |
-| **Change Type** | {type} |
+| **Object** | {table.column or object name} |
+| **Change Type** | {add/modify/drop/rename} |
 | **Module** | {owning module} |
 | **Severity** | {🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low} |
 | **Total Matches** | {count} |
-| **Search Scope** | {module / module+shared / cross-module / full} |
+| **🔴 Risks** | {count - will break} |
+| **🟡 Review** | {count - needs review} |
+| **🟢 Safe** | {count - informational} |
+| **Search Scope** | {module / module+shared / cross-module} |
 | **Analysis Date** | {YYYY-MM-DD} |
 
-### Dependencies Found
+### 🔴 Risks ({count}) - Must Address Before Change
+
+| File | Line | Type | Why Risk | Snippet |
+|------|------|------|----------|---------|
+| {path} | {line} | {type} | {reason} | {excerpt} |
+
+### 🟡 Review ({count}) - Needs Human Assessment
+
 | File | Line | Type | Pattern | Snippet |
 |------|------|------|---------|---------|
-{all rows if ≤25, else top 25 by risk with note}
-
-{if count > 25}
-> ℹ️ Showing top 25 of {count} matches (by risk). Full list in CSV below.
-{endif}
+| {path} | {line} | {type} | {pattern} | {excerpt} |
 
 ### Risk Factors
-- {factors based on findings}
+- {factor 1}
+- {factor 2}
 
-### Severity Score Breakdown
+### Severity Score
 - Base ({change type}): +{n}
-- Volume ({count} files): +{n}
-- {other modifiers}: +{n}
+- 🔴 Risks ({count} × 3): +{n}
+- 🟡 Reviews ({count} × 1): +{n}
+- Critical table modifier: +{n}
 - **Total: {score} → {Severity Level}**
 
 ### Recommendations
-- {action items based on severity and findings}
+- {action items based on risks found}
 ```
 
-#### CSV Data (Always in Chat)
+### CSV Format
+
 ```csv
-file_path,line_number,match_type,pattern_matched,code_snippet,severity_contribution
-{path},{line},{proc|trigger|view|direct},{pattern},{snippet (60 char max)},{+n}
-{... ALL matches ...}
+file_path,line_number,match_type,risk_level,pattern_matched,code_snippet
+{path},{line},{proc|trigger|view|direct},{Risk|Review|Safe},{pattern},{snippet (60 char max)}
 ```
 
-> 💡 Use `/saveImpactReport` to export to file for sharing.
+### Analysis Metadata
 
-#### Analysis Metadata
 ```csv
 metric,value
 object_name,{name}
@@ -211,7 +246,7 @@ severity_score,{number}
 total_matches,{count}
 search_scope,{scope}
 analysis_date,{YYYY-MM-DD}
-analyzed_by,sql-impact-agent
+analyzed_by,{analyzer}
 ```
 
 ---

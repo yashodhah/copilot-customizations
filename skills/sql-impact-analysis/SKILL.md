@@ -1,97 +1,149 @@
 ---
 name: sql-impact-analysis
-description: 'Analyze database schema changes for impact and risk. Use for: SQL dependency mapping, finding affected queries/procedures/views, assessing change severity, identifying breaking changes before deployment, database migration risk assessment.'
+description: 'Analyze database schema changes for impact and risk. Use for: SQL dependency mapping, finding affected queries/procedures/views/triggers, assessing change severity, identifying breaking changes before deployment, database migration and patch risk assessment.'
 ---
 
 # SQL Impact Analysis
 
 ## When to Use
-- Before modifying table schemas (add/drop/rename columns)
-- Before changing stored procedures or views
-- Evaluating migration risk
-- Identifying downstream dependencies
-- Assessing breaking changes in database refactoring
+- Before modifying tables, columns, procedures, functions, views, triggers
+- Evaluating migration/patch deployment risk
+- Finding dependencies between database objects in SQL files
 
-## Procedure
+## Quick Reference - Load the Right File
 
-### 1. Gather Change Details
-Ask the user for:
-- Table/column/object being changed
-- Type of change (add, modify, drop, rename)
-- Target environment (prod, staging, dev)
+Based on the change type, load the appropriate reference file:
 
-### 2. Search for Dependencies
-Use the patterns in [regex-patterns.md](./references/regex-patterns.md) to search the codebase:
+### Table/Column Changes
 
-**Step 2a: Direct SQL Pattern Search**
-Run `grep_search` with relevant patterns for the object type:
-- For tables: `FROM\s+{TABLE}|JOIN\s+{TABLE}|INTO\s+{TABLE}|UPDATE\s+{TABLE}`
-- For columns: `{TABLE}\.{COLUMN}|SELECT.*{COLUMN}|WHERE.*{COLUMN}`
-- Include file patterns: `*.sql`, `*.py`, `*.java`, `*.ts`, `*.js`, `*.cs`
+| Change Type | Reference File |
+|-------------|----------------|
+| Add column | [tables/add-column.md](./references/tables/add-column.md) |
+| Modify column (type, constraints) | [tables/modify-column.md](./references/tables/modify-column.md) |
+| Drop column | [tables/drop-column.md](./references/tables/drop-column.md) |
+| Rename column | [tables/rename-column.md](./references/tables/rename-column.md) |
+| Add table | [tables/add-table.md](./references/tables/add-table.md) |
+| Drop table | [tables/drop-table.md](./references/tables/drop-table.md) |
 
-**Step 2b: Semantic Search**
-Run `semantic_search` for conceptual matches:
-- Query: "code that uses {TABLE} table" or "queries {COLUMN} column"
-- This catches ORM usage, dynamic queries, and indirect references
+### Database Objects
 
-**Step 2c: Combine Results**
-- Deduplicate findings by file + line number
-- Categorize as "direct" (regex) or "semantic" (conceptual)
+| Object Type | Reference File |
+|-------------|----------------|
+| Procedures | [procedures/patterns.md](./references/procedures/patterns.md) |
+| Functions | [functions/patterns.md](./references/functions/patterns.md) |
+| Triggers | [triggers/patterns.md](./references/triggers/patterns.md) |
+| Views | [views/patterns.md](./references/views/patterns.md) |
+| Indexes | [indexes/patterns.md](./references/indexes/patterns.md) |
+| Sequences | [sequences/patterns.md](./references/sequences/patterns.md) |
 
-### 3. Classify Impact Severity
-Apply criteria from [severity-criteria.md](./references/severity-criteria.md):
-- Count affected files and categorize by type
-- Check for critical table markers
-- Assess rollback complexity
-- Calculate severity score
+### Patch Management
 
-### 4. Generate Report
-Output structured findings in BOTH markdown and CSV formats:
+| Task | Reference File |
+|------|----------------|
+| Patch ordering & dependencies | [patches/ordering.md](./references/patches/ordering.md) |
+
+### Always Load
+- [severity-criteria.md](./references/severity-criteria.md) - Impact classification and scoring
 
 ---
 
-## Output Templates
+## Procedure
 
-### Markdown Report
+### 1. Identify Change Type
 
-```markdown
-## Impact Analysis: [Object Name]
+Ask the user:
+- **Object type**: table, column, procedure, function, view, trigger, index?
+- **Operation**: add, modify, drop, rename?
+- **Specific object**: name of table/column/procedure being changed?
 
-### Summary
-- **Change Type**: [add/modify/drop/rename]
-- **Severity**: 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low
-- **Files Affected**: [count]
-- **Analysis Date**: [YYYY-MM-DD]
+### 2. Load Relevant Reference File
 
-### Dependencies Found
+Based on change type, read the appropriate reference file from the table above.
 
-| File | Line | Type | Pattern | Snippet |
-|------|------|------|---------|---------|
-| path/to/file.sql | 42 | direct | FROM table | SELECT * FROM... |
+### 3. Run Searches
 
-### Risk Factors
-- [List factors that contributed to severity rating]
+Using patterns from the reference file:
 
-### Recommendations
-- [Actionable next steps based on severity]
+**Step 3a: Direct Pattern Search**
+```
+grep_search with isRegexp: true
+includePattern: "**/*.sql"
 ```
 
-### CSV Report (for Excel/spreadsheet import)
+**Step 3b: Semantic Search**
+```
+semantic_search: "SQL that uses {OBJECT}"
+```
 
+### 4. Assess Severity
+
+Load and apply [severity-criteria.md](./references/severity-criteria.md):
+- Calculate base score from change type
+- Add modifiers based on findings
+- Determine severity level
+
+### 5. Generate Report
+
+Output in BOTH formats:
+
+#### Markdown Summary
+```markdown
+## Impact Analysis: {OBJECT_NAME}
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| **Object** | {name} |
+| **Change Type** | {type} |
+| **Severity** | {🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low} |
+| **Files Affected** | {count} |
+
+### Dependencies Found
+| File | Line | Type | Pattern | Snippet |
+|------|------|------|---------|---------|
+
+### Risk Factors
+- {factors}
+
+### Recommendations
+- {actions}
+```
+
+#### CSV Data
 ```csv
 file_path,line_number,match_type,pattern_matched,code_snippet,severity_contribution
 ```
 
-### Summary CSV
+---
 
-```csv
-metric,value
-object_name,[name]
-change_type,[type]
-severity,[level]
-total_files_affected,[count]
-direct_matches,[count]
-semantic_matches,[count]
-critical_factors,[list]
-analysis_date,[date]
+## Decision Tree
+
+```
+What are you changing?
+│
+├─► TABLE structure
+│   ├─► Adding column      → load tables/add-column.md
+│   ├─► Modifying column   → load tables/modify-column.md
+│   ├─► Dropping column    → load tables/drop-column.md
+│   ├─► Renaming column    → load tables/rename-column.md
+│   ├─► Adding table       → load tables/add-table.md
+│   └─► Dropping table     → load tables/drop-table.md
+│
+├─► PROCEDURE
+│   └─► Any change         → load procedures/patterns.md
+│
+├─► FUNCTION
+│   └─► Any change         → load functions/patterns.md
+│
+├─► TRIGGER
+│   └─► Any change         → load triggers/patterns.md
+│
+├─► VIEW
+│   └─► Any change         → load views/patterns.md
+│
+├─► INDEX
+│   └─► Any change         → load indexes/patterns.md
+│
+└─► PATCH deployment
+    └─► Ordering/deps      → load patches/ordering.md
 ```

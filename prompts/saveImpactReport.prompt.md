@@ -25,7 +25,7 @@ Save the SQL impact analysis from this conversation to files.
 3. **Save files** to `.github/impact-reports/` directory:
    - Create the directory if it doesn't exist
    - Write the detailed CSV
-   - Write the summary CSV  
+   - Write the summary CSV
    - Write the markdown report
 
 4. **Confirm** with the user:
@@ -45,3 +45,12 @@ Created impact analysis reports:
 
 You can import the CSV files into Excel or share the markdown with your team.
 ```
+
+## Excel Formatting (Optional)
+
+If the user wants styled Excel output, suggest:
+
+> "The CSV files are ready. To create a formatted Excel report with styling,
+> you can use an Excel skill: `@excel-skill format impact-report`"
+
+Or if Excel formatting is explicitly requested, hand off to the Excel skill after saving CSV.

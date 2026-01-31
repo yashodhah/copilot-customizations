@@ -1,0 +1,98 @@
+# Copilot Ignore File
+# Controls what files Copilot can see and index
+# Syntax: Same as .gitignore
+
+# =============================================================================
+# ARCHIVED / HISTORICAL
+# =============================================================================
+# Old patches no longer in active use
+/archive/**
+/deprecated/**
+/backup/**
+/old/**
+/**/archive/**
+/**/deprecated/**
+
+# Historical versions (keep only current)
+*_v[0-9].sql
+*_v[0-9][0-9].sql
+*_old.sql
+*_backup.sql
+*_bak.sql
+
+# =============================================================================
+# GENERATED / BUILD ARTIFACTS
+# =============================================================================
+*.log
+*.tmp
+*.bak
+*.cache
+*.pyc
+__pycache__/
+
+# Generated documentation (can regenerate)
+/generated/docs/**
+
+# Build outputs
+/dist/**
+/build/**
+/out/**
+
+# =============================================================================
+# TEST DATA (Large files that pollute context)
+# =============================================================================
+/test-data/**
+/**/test-data/**
+/**/fixtures/**
+/**/mock-data/**
+
+# Large data files
+*.csv
+*.xlsx
+*.xls
+*.dat
+*.dump
+
+# =============================================================================
+# VENDOR / THIRD-PARTY
+# =============================================================================
+/vendor/**
+/libs/oracle-standard/**
+/libs/third-party/**
+/node_modules/**
+
+# =============================================================================
+# ENVIRONMENT / SECRETS
+# =============================================================================
+.env
+.env.*
+*.pem
+*.key
+*credentials*
+*secrets*
+
+# =============================================================================
+# SVN METADATA
+# =============================================================================
+.svn/**
+**/.svn/**
+
+# =============================================================================
+# IDE / EDITOR
+# =============================================================================
+.idea/**
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# MODULE-SPECIFIC EXCLUSIONS
+# =============================================================================
+# Add module-specific patterns here or use per-directory .copilotignore files
+
+# Example: Exclude large migration scripts
+# /patches/migrations/historical/**
+
+# Example: Exclude auto-generated stored procedures
+# /**/generated_sp_*.sql

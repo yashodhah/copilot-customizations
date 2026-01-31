@@ -5,10 +5,60 @@ description: 'Analyze database schema changes for impact and risk. Use for: SQL 
 
 # SQL Impact Analysis
 
+## Repository Context
+
+> **Important**: Load the repository context first for domain knowledge.
+> Reference: `#file:.copilot-context.md`
+
+This skill analyzes a **large SVN-based SQL patch repository** for an insurance company.
+
 ## When to Use
 - Before modifying tables, columns, procedures, functions, views, triggers
 - Evaluating migration/patch deployment risk
 - Finding dependencies between database objects in SQL files
+
+## Large Repository Search Strategy
+
+> ⚠️ This is a large repository. Always constrain searches to avoid timeouts.
+
+### Module-Scoped Searching
+
+**ALWAYS use `includePattern` to limit search scope:**
+
+| If analyzing... | Use includePattern |
+|-----------------|-------------------|
+| Claims objects | `patches/claims/**/*.sql` |
+| Policies objects | `patches/policies/**/*.sql` |
+| Payments objects | `patches/payments/**/*.sql` |
+| Shared utilities | `patches/shared/**/*.sql` |
+| Cross-module | `patches/{module1,module2}/**/*.sql` |
+
+**Search Order (narrow → wide):**
+1. **Same module first**: Search within the object's module
+2. **Shared second**: Search `patches/shared/**/*.sql`
+3. **Dependent modules**: Based on module dependencies
+4. **Never search root**: Avoid `**/*.sql` on full repo
+
+### Example Constrained Search
+
+```
+# GOOD - Scoped to module
+grep_search: "FROM\s+claim"
+isRegexp: true
+includePattern: "patches/claims/**/*.sql"
+
+# BAD - Too broad, will timeout
+grep_search: "FROM\s+claim"
+isRegexp: true
+includePattern: "**/*.sql"
+```
+
+### Semantic Search Limitations
+
+> ⚠️ Semantic search may not be indexed for large repos (>2,500 files).
+> Prefer `grep_search` with patterns from reference files.
+
+---
 
 ## Quick Reference - Load the Right File
 
@@ -64,13 +114,29 @@ Based on change type, read the appropriate reference file from the table above.
 
 Using patterns from the reference file:
 
-**Step 3a: Direct Pattern Search**
+**Step 3a: Determine Module Scope**
+
+Identify which module the object belongs to:
+- Claims module: `includePattern: "patches/claims/**/*.sql"`
+- Policies module: `includePattern: "patches/policies/**/*.sql"`
+- Payments module: `includePattern: "patches/payments/**/*.sql"`
+- Shared module: `includePattern: "patches/shared/**/*.sql"`
+- Unknown: Ask user which module
+
+**Step 3b: Direct Pattern Search (Scoped)**
 ```
 grep_search with isRegexp: true
-includePattern: "**/*.sql"
+includePattern: "patches/{MODULE}/**/*.sql"
 ```
 
-**Step 3b: Semantic Search**
+**Step 3c: Expand to Shared (if needed)**
+```
+grep_search with isRegexp: true
+includePattern: "patches/shared/**/*.sql"
+```
+
+**Step 3d: Semantic Search (Optional)**
+> Only if repo is indexed (<2,500 files)
 ```
 semantic_search: "SQL that uses {OBJECT}"
 ```

@@ -11,10 +11,44 @@ Custom skills, agents, and prompts for SQL impact analysis and database change m
 | Save impact report | `/saveImpactReport` |
 | Save change request | `/saveChangeRequest` |
 
+## Context Engineering (Large SVN Repos)
+
+This repository includes context engineering for large SVN-based SQL repositories.
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `.copilotignore` | Excludes irrelevant files from Copilot indexing |
+| `.copilot-context.md` | Repository manifest with module structure, naming conventions, critical tables |
+| `templates/module-copilotignore.md` | Per-module ignore templates |
+
+### Usage
+
+1. **Reference context in prompts**: Use `#file:.copilot-context.md` to load domain knowledge
+2. **Scope searches by module**: Always use `includePattern: "patches/{module}/**/*.sql"`
+3. **Customize ignores**: Add `.copilotignore` files per module directory
+
+### Search Strategy for Large Repos
+
+```
+# GOOD - Scoped to module
+grep_search: "FROM\s+claim"
+includePattern: "patches/claims/**/*.sql"
+
+# BAD - Too broad
+grep_search: "FROM\s+claim"
+includePattern: "**/*.sql"
+```
+
 ## Structure
 
 ```
 copilot_client/
+├── .copilotignore            # Root-level ignore patterns
+├── .copilot-context.md       # Repository context manifest
+├── templates/
+│   └── module-copilotignore.md  # Per-module ignore templates
 ├── agents/
 │   ├── sql-impact.agent.md       # Read-only impact analysis
 │   └── db-change-intake.agent.md # Guided change request intake

@@ -3,6 +3,43 @@
 ## Risk Level
 🟠 **High risk** - All references must be updated simultaneously
 
+## Risk Classification
+
+> **All references to the OLD column name are risks.** They must be updated.
+
+### 🔴 Risk (Will Break)
+
+| Pattern | Why Risk | Regex |
+|---------|----------|-------|
+| `table.old_column` | Qualified reference - will fail | `{TABLE}\.{OLD_COLUMN}` |
+| `SELECT old_column` | Column name doesn't exist | `SELECT\s+.*\b{OLD_COLUMN}\b` |
+| `WHERE old_column = x` | Filter will fail | `WHERE\s+.*\b{OLD_COLUMN}\b` |
+| `ORDER BY old_column` | Sort will fail | `ORDER\s+BY\s+.*\b{OLD_COLUMN}\b` |
+| `GROUP BY old_column` | Group will fail | `GROUP\s+BY\s+.*\b{OLD_COLUMN}\b` |
+| `SET old_column = x` | Update will fail | `SET\s+{OLD_COLUMN}\s*=` |
+| `INSERT (old_column)` | Insert will fail | `INSERT.*\(.*\b{OLD_COLUMN}\b` |
+| `ON a.old_column = b.x` | Join will fail | `ON\s+.*\b{OLD_COLUMN}\b\s*=` |
+| Views using old_column | View becomes invalid | `CREATE.*VIEW.*{OLD_COLUMN}` |
+| Procedures using old_column | Runtime error | `(PROCEDURE\|FUNCTION).*{OLD_COLUMN}` |
+| Index on old_column | Index references old name | `INDEX.*{OLD_COLUMN}` |
+| FK constraint | Constraint references old name | `(CONSTRAINT\|REFERENCES).*{OLD_COLUMN}` |
+
+### 🟡 Review (Behavior Change)
+
+| Pattern | Why Review | Regex |
+|---------|------------|-------|
+| `SELECT * FROM table` | Won't fail but column name changes in output | `SELECT\s+\*\s+FROM\s+(\w+\.)?{TABLE}` |
+| Result set consumers | Downstream code may expect old column name | - |
+
+### 🟢 Safe (Informational Only)
+
+| Pattern | Why Safe | Regex |
+|---------|----------|-------|
+| `AS old_column` | Alias - independent of actual column | `AS\s+{OLD_COLUMN}` |
+| `old_column AS x` | Source could be anything named that | `{OLD_COLUMN}\s+AS\s+` |
+| `-- comment` | Documentation only | `--.*{OLD_COLUMN}` |
+| String literals | May be coincidental | `'.*{OLD_COLUMN}.*'` |
+
 ## Key Concerns
 
 | Concern | Impact |

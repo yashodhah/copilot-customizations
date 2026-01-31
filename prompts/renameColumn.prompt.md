@@ -82,7 +82,14 @@ Reference: `#skill:sql-impact-analysis/references/tables/rename-column.md`
 
 ## Output
 
-After analysis, provide:
+Use the **consistent output format** from sql-impact agent:
+1. Markdown summary with all standard fields (severity, total matches, search scope)
+2. Dependencies table (all matches, or top 25 if >25)
+3. CSV data in chat (always)
+4. Risk factors and recommendations
+5. Offer `/saveImpactReport` to export
+
+After analysis, also include:
 1. **Comprehensive dependency list** - Miss nothing
 2. **Deployment coordination requirements**
 3. **Suggested deployment order**:

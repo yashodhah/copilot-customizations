@@ -86,8 +86,14 @@ Reference: `#skill:sql-impact-analysis/references/tables/drop-column.md`
 
 ## Output
 
-After analysis, provide:
+Use the **consistent output format** from sql-impact agent:
+1. Markdown summary with all standard fields (severity, total matches, search scope)
+2. Dependencies table (all matches, or top 25 if >25)
+3. CSV data in chat (always)
+4. Risk factors and recommendations
+5. Offer `/saveImpactReport` to export
 
+After analysis, also include:
 1. **Data status**: Empty or has data?
 2. **Complete dependency list** - Miss nothing
 3. **Prerequisites**:

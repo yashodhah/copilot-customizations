@@ -3,6 +3,62 @@
 ## Risk Level
 🟠 **Medium to High risk** - Data type changes can cause data loss or errors
 
+## Risk Classification
+
+> **Risk depends on WHAT is being modified.** Widening is safer than narrowing or type changes.
+
+### Risk Matrix by Modification Type
+
+| Pattern | Widen | Narrow | Type Change | Add NOT NULL |
+|---------|-------|--------|-------------|--------------|
+| `SELECT column` | 🟢 Safe | 🟢 Safe | 🟢 Safe | 🟢 Safe |
+| `WHERE column = 'str'` | 🟢 Safe | 🟢 Safe | 🔴 Risk | 🟢 Safe |
+| `WHERE column > 100` | 🟢 Safe | 🟢 Safe | 🔴 Risk | 🟢 Safe |
+| `WHERE column LIKE '%x%'` | 🟢 Safe | 🟢 Safe | 🔴 Risk | 🟢 Safe |
+| `INSERT (column)` | 🟢 Safe | 🟡 Review | 🔴 Risk | 🟡 Review |
+| `SET column = value` | 🟢 Safe | 🟡 Review | 🔴 Risk | 🟡 Review |
+| Index on column | 🟢 Safe | 🟡 Review | 🔴 Risk | 🟢 Safe |
+| `CAST(column AS type)` | 🟢 Safe | 🟢 Safe | 🟡 Review | 🟢 Safe |
+
+### 🔴 Risk (Will Break or Cause Data Issues)
+
+**For Type Changes (e.g., VARCHAR → INT):**
+
+| Pattern | Why Risk | Regex |
+|---------|----------|-------|
+| `WHERE column = 'string'` | Type mismatch | `WHERE.*{COLUMN}\s*=\s*'` |
+| `WHERE column LIKE` | LIKE only works on strings | `WHERE.*{COLUMN}\s+LIKE` |
+| `column + other_column` | Arithmetic/concat mismatch | `{COLUMN}\s*[\+\-\*\/]` |
+| Procedure DECLARE | Variable type mismatch | `DECLARE.*{COLUMN}` |
+
+**For Adding NOT NULL:**
+
+| Pattern | Why Risk | Regex |
+|---------|----------|-------|
+| `INSERT without column` | NULL implicit - will fail | `INSERT.*{TABLE}.*VALUES` |
+| `INSERT with NULL` | Explicit NULL - will fail | `INSERT.*{COLUMN}.*NULL` |
+
+### 🟡 Review (May Be Affected)
+
+**For Narrowing (e.g., VARCHAR(100) → VARCHAR(50)):**
+
+| Pattern | Why Review | Regex |
+|---------|------------|-------|
+| `INSERT (column)` | Data may be too long | `INSERT.*\(.*{COLUMN}` |
+| `SET column = value` | Update value may be too long | `SET\s+{COLUMN}\s*=` |
+| Index on column | May need rebuild | `INDEX.*{COLUMN}` |
+| `column \|\| other` | Concat result may exceed | `{COLUMN}\s*\|\|` |
+
+### 🟢 Safe (Informational Only)
+
+**For Widening (e.g., VARCHAR(50) → VARCHAR(100)):**
+
+| Pattern | Why Safe | Regex |
+|---------|----------|-------|
+| All SELECT patterns | No change in behavior | - |
+| All WHERE patterns | No change in comparison | - |
+| All ORDER BY patterns | No change in sorting | - |
+
 ## Types of Modifications
 
 | Modification | Risk Level | Concern |

@@ -3,6 +3,34 @@
 ## Risk Level
 🟢 **Generally low risk** - Additive change, but watch for NOT NULL without defaults
 
+## Risk Classification
+
+> **Not all matches are risks for ADD COLUMN.** Most explicit column references are safe.
+
+### 🔴 Risk (Will Break)
+
+| Pattern | Why Risk | Regex |
+|---------|----------|-------|
+| `INSERT INTO table VALUES (...)` | Column count mismatch if NOT NULL | `INSERT\s+INTO\s+(\w+\.)?{TABLE}\s+VALUES` |
+| `INSERT...SELECT *` | Inserts all cols including new one | `INSERT.*SELECT\s+\*.*FROM` |
+
+### 🟡 Review (May Be Affected)
+
+| Pattern | Why Review | Regex |
+|---------|------------|-------|
+| `SELECT * FROM table` | Returns new column - check consumers | `SELECT\s+\*\s+FROM\s+(\w+\.)?{TABLE}` |
+| Views with `SELECT *` | View will include new column | `CREATE.*VIEW.*SELECT\s+\*.*{TABLE}` |
+| `SELECT * INTO #temp` | Temp table schema changes | `SELECT\s+\*\s+INTO\s+#` |
+
+### 🟢 Safe (Informational Only)
+
+| Pattern | Why Safe | Regex |
+|---------|----------|-------|
+| `INSERT INTO table (col1, col2)` | Explicit columns - new col ignored | `INSERT\s+INTO\s+(\w+\.)?{TABLE}\s*\(` |
+| `SELECT col1, col2 FROM table` | Explicit columns - unaffected | `SELECT\s+\w+.*FROM.*{TABLE}` |
+| `UPDATE table SET col = x` | Doesn't affect new column | `UPDATE.*{TABLE}.*SET` |
+| Views with explicit columns | View definition unchanged | - |
+
 ## Key Considerations
 
 | Factor | Risk Impact |

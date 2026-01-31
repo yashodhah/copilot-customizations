@@ -150,7 +150,9 @@ Load and apply [severity-criteria.md](./references/severity-criteria.md):
 
 ### 5. Generate Report
 
-Output in BOTH formats:
+> **This is the canonical output format.** All entry points (agent, prompts) must produce this format.
+
+Output in BOTH formats - **always include CSV in chat**:
 
 #### Markdown Summary
 ```markdown
@@ -161,23 +163,55 @@ Output in BOTH formats:
 |--------|-------|
 | **Object** | {name} |
 | **Change Type** | {type} |
+| **Module** | {owning module} |
 | **Severity** | {🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low} |
-| **Files Affected** | {count} |
+| **Total Matches** | {count} |
+| **Search Scope** | {module / module+shared / cross-module / full} |
+| **Analysis Date** | {YYYY-MM-DD} |
 
 ### Dependencies Found
 | File | Line | Type | Pattern | Snippet |
 |------|------|------|---------|---------|
+{all rows if ≤25, else top 25 by risk with note}
+
+{if count > 25}
+> ℹ️ Showing top 25 of {count} matches (by risk). Full list in CSV below.
+{endif}
 
 ### Risk Factors
-- {factors}
+- {factors based on findings}
+
+### Severity Score Breakdown
+- Base ({change type}): +{n}
+- Volume ({count} files): +{n}
+- {other modifiers}: +{n}
+- **Total: {score} → {Severity Level}**
 
 ### Recommendations
-- {actions}
+- {action items based on severity and findings}
 ```
 
-#### CSV Data
+#### CSV Data (Always in Chat)
 ```csv
 file_path,line_number,match_type,pattern_matched,code_snippet,severity_contribution
+{path},{line},{proc|trigger|view|direct},{pattern},{snippet (60 char max)},{+n}
+{... ALL matches ...}
+```
+
+> 💡 Use `/saveImpactReport` to export to file for sharing.
+
+#### Analysis Metadata
+```csv
+metric,value
+object_name,{name}
+change_type,{type}
+owning_module,{module}
+severity,{Critical|High|Medium|Low}
+severity_score,{number}
+total_matches,{count}
+search_scope,{scope}
+analysis_date,{YYYY-MM-DD}
+analyzed_by,sql-impact-agent
 ```
 
 ---

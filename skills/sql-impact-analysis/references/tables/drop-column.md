@@ -3,6 +3,42 @@
 ## Risk Level
 🔴 **High risk** - Data loss is irreversible
 
+## Risk Classification
+
+> **Almost ALL references are risks for DROP COLUMN.** The column will no longer exist.
+
+### 🔴 Risk (Will Break)
+
+| Pattern | Why Risk | Regex |
+|---------|----------|-------|
+| `table.column` | Explicit qualified reference | `{TABLE}\.{COLUMN}` |
+| `SELECT column` | Column doesn't exist | `SELECT\s+.*\b{COLUMN}\b` |
+| `WHERE column = x` | Filter will fail | `WHERE\s+.*\b{COLUMN}\b` |
+| `ORDER BY column` | Sort will fail | `ORDER\s+BY\s+.*\b{COLUMN}\b` |
+| `GROUP BY column` | Group will fail | `GROUP\s+BY\s+.*\b{COLUMN}\b` |
+| `SET column = x` | Update will fail | `SET\s+{COLUMN}\s*=` |
+| `INSERT (column)` | Insert will fail | `INSERT.*\(.*\b{COLUMN}\b` |
+| `INSERT VALUES` (no cols) | Column count mismatch | `INSERT\s+INTO.*VALUES` |
+| Views using column | View becomes invalid | `CREATE.*VIEW.*{COLUMN}` |
+| Procedures using column | Runtime error | `(PROCEDURE\|FUNCTION).*{COLUMN}` |
+| FK references | Constraint violation | `REFERENCES\s+{TABLE}\s*\(.*{COLUMN}` |
+| Index on column | Index must be dropped | `INDEX.*{COLUMN}` |
+
+### 🟡 Review (Behavior Change)
+
+| Pattern | Why Review | Regex |
+|---------|------------|-------|
+| `SELECT * FROM table` | Won't fail but returns less data | `SELECT\s+\*\s+FROM\s+(\w+\.)?{TABLE}` |
+| Triggers on table | May expect column | `TRIGGER.*ON\s+{TABLE}` |
+
+### 🟢 Safe (Informational Only)
+
+| Pattern | Why Safe | Regex |
+|---------|----------|-------|
+| `-- comment about column` | Documentation only | `--.*{COLUMN}` |
+| `/* comment */` | Documentation only | `/\*.*{COLUMN}.*\*/` |
+| String literals | May be coincidental match | `'.*{COLUMN}.*'` |
+
 ## Key Concerns
 
 | Concern | Impact |

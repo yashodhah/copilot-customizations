@@ -66,8 +66,14 @@ Reference: `#skill:sql-impact-analysis/references/tables/add-column.md`
 
 ## Output
 
-After analysis, provide:
-1. Standard impact summary
-2. Specific callouts for INSERT/SELECT * issues
-3. Recommendation on deployment approach (online vs maintenance window)
+Use the **consistent output format** from sql-impact agent:
+1. Markdown summary with all standard fields (severity, total matches, search scope)
+2. Dependencies table (all matches, or top 25 if >25)
+3. CSV data in chat (always)
+4. Risk factors and recommendations
+5. Offer `/saveImpactReport` to export
+
+After analysis, also include:
+- Specific callouts for INSERT/SELECT * issues
+- Recommendation on deployment approach (online vs maintenance window)
 ```

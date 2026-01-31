@@ -58,6 +58,12 @@ includePattern: "**/*.sql"
 > ⚠️ Semantic search may not be indexed for large repos (>2,500 files).
 > Prefer `grep_search` with patterns from reference files.
 
+### grep_search Limitations
+
+> ⚠️ `grep_search` has hard limits: **200 matches max**, **20-second timeout**.
+> See `#file:research/grep-search-limitations.md` for details.
+> Use `#skill:python-grep-search` when limit hit (returns exactly 200 results).
+
 ---
 
 ## Quick Reference - Load the Right File
@@ -234,19 +240,24 @@ file_path,line_number,match_type,risk_level,pattern_matched,code_snippet
 {path},{line},{proc|trigger|view|direct},{Risk|Review|Safe},{pattern},{snippet (60 char max)}
 ```
 
-### Analysis Metadata
+### Metadata JSON Format
 
-```csv
-metric,value
-object_name,{name}
-change_type,{type}
-owning_module,{module}
-severity,{Critical|High|Medium|Low}
-severity_score,{number}
-total_matches,{count}
-search_scope,{scope}
-analysis_date,{YYYY-MM-DD}
-analyzed_by,{analyzer}
+```json
+{
+  "change_id": "{object}-{operation}-{YYYY-MM-DD}",
+  "object_name": "{name}",
+  "change_type": "{add|modify|drop|rename}",
+  "owning_module": "{module}",
+  "severity": "{Critical|High|Medium|Low}",
+  "severity_score": {number},
+  "total_matches": {count},
+  "risk_count": {count},
+  "review_count": {count},
+  "safe_count": {count},
+  "search_scope": ["{module1}", "{module2}"],
+  "search_type": "{grep_search|comprehensive}",
+  "analysis_date": "{YYYY-MM-DD}"
+}
 ```
 
 ---

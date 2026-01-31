@@ -1,0 +1,7 @@
+# Impact Analysis Reports Directory
+
+This directory stores:
+- Temporary CSV exports from @sql-impact agent (temp-*.csv)
+- Finalized impact reports (impact-report-*.csv, *.md)
+
+CSV files are excluded from Copilot indexing via .copilotignore.

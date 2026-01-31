@@ -1,173 +1,118 @@
 ---
 name: Save Change Request
-description: 'Save a completed database change request document for human review and approval tracking.'
+description: 'Save a change request context document that guides analysis and review.'
 agent: agent
 tools: ["edit"]
 ---
 
-# Save Database Change Request
+# Save Change Request Context
 
-Save the change request document to the `change-requests` folder.
+Save the change request document to the `change-requests` folder. This is a **context template** that captures details for future reference and guides impact analysis.
 
 ## Instructions
 
 1. Generate a filename using: `CR-{YYYYMMDD}-{OBJECT_NAME}.md`
 2. Save to: `copilot_client/change-requests/`
-3. Use the template below
+3. Use the simplified template below
 
 ## Template
 
 ```markdown
-# Database Change Request: {OBJECT_NAME}
+# Change Request: {OBJECT_NAME}
 
-**Request ID**: CR-{YYYYMMDD}-{OBJECT_NAME}
-**Created**: {DATE}
-**Status**: 🟡 Pending Review
+**ID**: CR-{YYYYMMDD}-{OBJECT_NAME}  
+**Created**: {DATE}  
+**Ticket**: {JIRA/ServiceNow ID or N/A}
 
 ---
 
-## Change Summary
+## What's Changing?
 
 | Field | Value |
 |-------|-------|
-| **Object Type** | {TABLE/PROCEDURE/FUNCTION/VIEW/TRIGGER} |
+| **Object Type** | {TABLE/COLUMN/PROCEDURE/FUNCTION/VIEW/TRIGGER} |
 | **Object Name** | {schema.object_name} |
 | **Operation** | {ADD/MODIFY/DROP/RENAME} |
-| **Ticket** | {JIRA/ServiceNow ID} |
-| **Requester** | {name} |
-| **Target Date** | {deployment date} |
+| **Module** | {claims/policies/payments/billing/shared/core} |
 
 ---
 
 ## Technical Details
 
 ### Current State
-{Describe current object definition or N/A for new objects}
+{Describe current object definition or "N/A - new object"}
 
 ### Proposed Change
 ```sql
-{DDL statement or description}
+{DDL statement or description of change}
 ```
 
-### Affected Columns/Parameters
-| Name | Current | Proposed | Notes |
-|------|---------|----------|-------|
-| | | | |
+### Column Details (if applicable)
+| Column | Current | Proposed | Notes |
+|--------|---------|----------|-------|
+| {name} | {type/constraint} | {new type/constraint} | {reason} |
 
 ---
 
-## Business Context
+## Context
 
-### Justification
-{Why is this change needed?}
+### Why?
+{Brief business reason - 1-2 sentences}
 
-### Impact if Not Done
-{What happens if we don't make this change?}
+### Who Requested?
+{Team/person and ticket reference}
 
-### Downstream Consumers
-- [ ] {System/team 1}
-- [ ] {System/team 2}
-
----
-
-## Risk Assessment
-
-### Risk Factors
-| Factor | Applicable | Notes |
-|--------|------------|-------|
-| Critical table | ☐ Yes / ☐ No | |
-| Has production data | ☐ Yes / ☐ No | |
-| Breaking change | ☐ Yes / ☐ No | |
-| Complex rollback | ☐ Yes / ☐ No | |
-| External dependencies | ☐ Yes / ☐ No | |
-
-### Preliminary Risk Level
-☐ 🟢 Low  ☐ 🟡 Medium  ☐ 🟠 High  ☐ 🔴 Critical
+### Known Dependencies
+- {System or module that uses this object}
+- {Another known consumer}
 
 ---
 
-## Pre-Deployment Checklist
+## Risk Flags
 
-### Analysis
-- [ ] Impact analysis completed (run `@sql-impact`)
-- [ ] Dependencies documented
-- [ ] Test cases identified
-
-### Review
-- [ ] DBA reviewed change
-- [ ] Team lead approved
-- [ ] Stakeholders notified
-
-### Deployment Prep
-- [ ] Rollback script prepared
-- [ ] Deployment window scheduled
-- [ ] Monitoring plan in place
-- [ ] Communication sent
+Check all that apply:
+- [ ] Critical table (policy, claim, payment, customer, billing)
+- [ ] Table has production data
+- [ ] Breaking change (removes or renames something)
+- [ ] External systems affected
+- [ ] Large table (may lock during ALTER)
 
 ---
 
-## Approvals
+## Impact Analysis
 
-| Role | Name | Date | Signature |
-|------|------|------|-----------|
-| Requester | | | ☐ |
-| DBA | | | ☐ |
-| Team Lead | | | ☐ |
-| Release Manager | | | ☐ |
+> **Run**: `@sql-impact analyze {OBJECT_NAME}`
 
----
-
-## Impact Analysis Results
-
-> Run `@sql-impact analyze {OBJECT_NAME}` and paste results here
-
-### Summary
 | Metric | Value |
 |--------|-------|
-| Severity | |
-| Files Affected | |
-| Critical Dependencies | |
+| Severity | _{pending analysis}_ |
+| Files Affected | _{pending analysis}_ |
 
-### Detailed Findings
-{Paste impact analysis output}
+### Findings Summary
+{Paste key findings from @sql-impact or note "pending"}
+
+### Full Report
+{Link to `copilot_impact_analysis/` CSV if generated}
 
 ---
 
-## Rollback Plan
+## Rollback
 
 ```sql
--- Rollback DDL
-{rollback statement}
+-- Rollback DDL (if applicable)
+{rollback statement or "N/A - additive change"}
 ```
 
-### Rollback Verification
-{How to verify rollback was successful}
-
 ---
 
-## Deployment Notes
+## Notes
 
-### Deployment Order
-1. {step 1}
-2. {step 2}
-
-### Post-Deployment Verification
-- [ ] {verification step 1}
-- [ ] {verification step 2}
-
----
-
-## History
-
-| Date | Action | By |
-|------|--------|-----|
-| {DATE} | Created | {name} |
+{Any edge cases, concerns, or coordination needed}
 ```
 
 ## After Saving
 
-Instruct the user:
-1. **Review** the saved document at `copilot_client/change-requests/CR-{ID}.md`
-2. **Run impact analysis**: `@sql-impact analyze {OBJECT_NAME}`
-3. **Circulate for approval** to DBA and team lead
-4. **Update status** in the document as approvals are obtained
+Tell the user:
+1. Document saved to `copilot_client/change-requests/CR-{ID}.md`
+2. Run `@sql-impact analyze {OBJECT}` to populate impact section  
+3. Share with team for review before deployment

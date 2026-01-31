@@ -1,56 +1,173 @@
 ---
 name: saveImpactReport
-description: 'Save the impact analysis results from the current conversation as CSV and markdown files for team sharing'
-tools: ["edit"]
+description: 'Save impact analysis results as finalized CSV and markdown files for team sharing'
+tools: ["edit", "read"]
 agent: "agent"
 argument-hint: "Optional: filename prefix (default: impact-report)"
 ---
 
-Save the SQL impact analysis from this conversation to files.
+Save the SQL impact analysis from this conversation to permanent files.
 
 ## Instructions
 
-1. **Extract data** from the previous impact analysis response:
-   - Find the markdown summary section
-   - Find the CSV code blocks (detailed findings and summary)
+### 1. Check for Temp CSV
 
-2. **Generate filenames** using the pattern:
-   - `{prefix}-{object-name}-{date}.csv` for detailed findings
-   - `{prefix}-{object-name}-{date}-summary.csv` for summary
-   - `{prefix}-{object-name}-{date}.md` for full markdown report
-   - Use today's date in `YYYY-MM-DD` format
-   - Default prefix is `impact-report` if not specified
-   - Sanitize object name (replace spaces/special chars with hyphens)
+First, check if `@sql-impact` already exported a temp CSV:
+- Look for `copilot_impact_analysis/temp-*.csv` mentioned in the conversation
+- If found, use that as the source for detailed findings
 
-3. **Save files** to `.github/impact-reports/` directory:
-   - Create the directory if it doesn't exist
-   - Write the detailed CSV
-   - Write the summary CSV
-   - Write the markdown report
+### 2. Extract Data
 
-4. **Confirm** with the user:
-   - List the files created
-   - Provide the full paths
+From the conversation, gather:
+- Markdown summary section
+- CSV data (either from chat or temp file)
+- Summary metrics
 
-## Example Output
+### 3. Generate Filenames
 
-If the analysis was for "customers.email" column on 2026-01-31:
+Pattern: `{prefix}-{object-name}-{date}.{ext}`
+- Default prefix: `impact-report`
+- Sanitize object name: replace `.` and spaces with `-`
+- Date format: `YYYY-MM-DD`
+
+Files to create:
+- `{name}.csv` - Detailed findings
+- `{name}-summary.csv` - Summary metrics  
+- `{name}.md` - Full markdown report
+
+### 4. Save Location
+
+Save to: `copilot_impact_analysis/`
+
+Create directory if it doesn't exist.
+
+### 5. Clean Up Temp Files
+
+If a temp CSV was used:
+- Copy data to final report
+- Optionally delete temp file (ask user preference)
+
+### 6. Confirm with User
 
 ```
-Created impact analysis reports:
+Impact analysis reports saved:
 
-- .github/impact-reports/impact-report-customers-email-2026-01-31.csv (detailed findings)
-- .github/impact-reports/impact-report-customers-email-2026-01-31-summary.csv (summary metrics)
-- .github/impact-reports/impact-report-customers-email-2026-01-31.md (full report)
+copilot_impact_analysis/impact-report-{object}-{date}.csv
+   -> {N} detailed findings for Excel import
+   
+copilot_impact_analysis/impact-report-{object}-{date}-summary.csv  
+   -> Key metrics summary
 
-You can import the CSV files into Excel or share the markdown with your team.
+copilot_impact_analysis/impact-report-{object}-{date}.md
+   -> Full markdown report for documentation
+
+{If temp file existed:}
+Cleaned up: copilot_impact_analysis/temp-{object}-{date}.csv
 ```
 
-## Excel Formatting (Optional)
+---
 
-If the user wants styled Excel output, suggest:
+## Handling Large Results
 
-> "The CSV files are ready. To create a formatted Excel report with styling,
-> you can use an Excel skill: `@excel-skill format impact-report`"
+If the source data came from a temp file (51+ matches):
 
-Or if Excel formatting is explicitly requested, hand off to the Excel skill after saving CSV.
+1. **Read the temp CSV** using `read` tool
+2. **Copy all rows** to the final report (no truncation)
+3. **Generate summary** from the full data
+4. **Clean up temp file** after confirmation
+
+---
+
+## Report Template
+
+### Markdown Report Structure
+
+```markdown
+# Impact Analysis Report
+
+**Generated**: {YYYY-MM-DD HH:MM}  
+**Object**: {object_name}  
+**Change Type**: {change_type}
+
+---
+
+## Executive Summary
+
+| Metric | Value |
+|--------|-------|
+| Severity | {level} |
+| Total Files Affected | {N} |
+| Critical Dependencies | {N} |
+| Recommended Action | {action} |
+
+---
+
+## Risk Assessment
+
+### Severity Score: {score}
+- Base ({change_type}): +{n}
+- File count ({N} files): +{n}
+- Critical table: +{n}
+- **Total**: {score} -> {severity}
+
+### Risk Factors
+{bulleted list}
+
+---
+
+## Detailed Findings
+
+| # | File | Line | Match Type | Pattern | Code Snippet |
+|---|------|------|------------|---------|--------------|
+| 1 | {path} | {line} | {type} | {pattern} | {snippet} |
+{... all rows ...}
+
+---
+
+## Recommendations
+
+1. {recommendation based on severity}
+2. {coordination needed}
+3. {testing requirements}
+
+---
+
+## Next Steps
+
+- [ ] Review with DBA
+- [ ] Update change request document
+- [ ] Schedule deployment window
+- [ ] Prepare rollback script
+
+---
+
+_Report generated by @sql-impact agent_
+```
+
+---
+
+## CSV Format Reference
+
+### Detailed Findings CSV
+
+```csv
+row_number,file_path,line_number,match_type,pattern_matched,code_snippet,severity_contribution
+1,{path},{line},{direct|semantic},{pattern},{snippet},{+n}
+```
+
+### Summary CSV
+
+```csv
+metric,value
+report_name,{filename}
+object_name,{name}
+change_type,{type}
+severity,{level}
+severity_score,{number}
+total_files_affected,{count}
+direct_matches,{count}
+semantic_matches,{count}
+critical_dependencies,{count}
+analysis_date,{YYYY-MM-DD}
+report_generated,{YYYY-MM-DD HH:MM}
+```

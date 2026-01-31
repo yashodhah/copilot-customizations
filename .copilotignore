@@ -46,6 +46,13 @@ __pycache__/
 /**/fixtures/**
 /**/mock-data/**
 
+# =============================================================================
+# IMPACT ANALYSIS EXPORTS
+# =============================================================================
+# CSV exports from @sql-impact agent (can be large)
+copilot_impact_analysis/*.csv
+copilot_impact_analysis/temp-*.csv
+
 # Large data files
 *.csv
 *.xlsx
